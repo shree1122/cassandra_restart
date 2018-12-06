@@ -1,0 +1,37 @@
+---
+  
+- name: Restart the Cassandra service on all the Cassandra nodes
+  hosts: cassandra
+  gather_facts: false
+  become_user: root
+  become: true
+
+  tasks:
+
+    - name: Check Cassandra status
+      shell: "netstat -tulpn | grep 7199"
+      register: cas_status
+      ignore_errors: true
+
+    - name: Shutdown Cassandra
+      shell: "bin/shutdown_cassandra.sh"
+      args:
+       chdir: "/opt/simility/"
+      when: cas_status.stdout != ""
+
+    - name: Startup Cassandra
+      shell: "bin/startup_cassandra.sh"
+      args:
+       chdir: "/opt/simility/"
+      when: cas_status.stdout == ""
+
+    - name: Print the Status of the Cassandra
+      debug:
+        msg: "Cassandra service successfully SHUTDOWN"
+      when: cas_status.stdout != ""
+
+    - name: Print the Status of the Cassandra
+      debug:
+        msg: "Cassandra service successfully STARTED"
+      when: cas_status.stdout == ""
+
